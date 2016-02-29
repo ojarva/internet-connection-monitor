@@ -59,12 +59,12 @@ class DnsSpeed(object):
         }
         if extra_tags is not None:
             tags.update(extra_tags)
-        influx_data = [{
+        influx_data = {
             "measurement": "dns_speed",
             "tags": tags,
             "time": datetime.datetime.utcnow().isoformat() + "Z",
             "fields": data,
-        }]
+        }
         return influx_data
 
     def fetch_once(self):
