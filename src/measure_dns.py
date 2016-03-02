@@ -17,6 +17,7 @@ assert isinstance(DNS_INTERVAL, (int, float))
 
 
 class DateTimeEncoder(json.JSONEncoder):
+
     def default(self, o):
         if isinstance(o, datetime.datetime):
             return o.isoformat()
@@ -34,6 +35,7 @@ def time_method(func):
 
 
 class DnsSpeed(object):
+
     def __init__(self):
         self.redis = redis.StrictRedis()
         self.influx = InfluxDBClient("localhost", 8086, "root", "root", "home")

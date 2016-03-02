@@ -19,6 +19,7 @@ assert isinstance(FULL_BANDWIDTH_SIZES, (tuple, list))
 
 
 class DateTimeEncoder(json.JSONEncoder):
+
     def default(self, o):
         if isinstance(o, datetime.datetime):
             return o.isoformat()
@@ -27,6 +28,7 @@ class DateTimeEncoder(json.JSONEncoder):
 
 
 class InternetConnectionSpeed(object):
+
     def __init__(self):
         self.redis = redis.StrictRedis()
         self.influx = InfluxDBClient("localhost", 8086, "root", "root", "home")
