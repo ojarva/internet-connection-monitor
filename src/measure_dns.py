@@ -6,6 +6,7 @@ import json
 import redis
 import time
 import uuid
+import utils
 
 
 assert isinstance(NAMESERVERS, (list, tuple))
@@ -49,9 +50,16 @@ class DnsSpeed(object):
             pass
 
     def test(self, hostname):
+        response_times = []
         data = {}
-        data["first_try"] = self.resolve_dns(hostname)
-        data["second_try"] = self.resolve_dns(hostname)
+        for a in range(1, 6):
+            try:
+                response_time = self.resolve_dns(hostname)
+            except dns.exception.Timeout:
+                response_time = None
+            response_times.append(response_time)
+            data["try-%s" % a] = response_time
+        data.update(utils.calc_stats(filter(lambda x: x is not None, response_times)))
         return data
 
     def write_data(self, nameserver, destination, data, extra_tags=None):
