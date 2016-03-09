@@ -5,6 +5,7 @@ import httplib
 import json
 import redis
 import time
+import socket
 
 
 assert isinstance(SPEED_TEST_HOST, str)
@@ -34,17 +35,21 @@ class InternetConnectionSpeed(object):
 
     def measure_download(self, size):
         start = time.time()
-        conn = httplib.HTTPConnection(SPEED_TEST_HOST)
-        conn.connect()
-        connected = time.time()
-        conn.request('GET', "/{path}?size={size}".format(path=SPEED_TEST_PATH, size=size))
-        request_time = time.time()
-        resp = conn.getresponse()
-        response_time = time.time()
-        response_content = resp.read()
-        size = len(response_content)
-        transferred = time.time()
-        conn.close()
+        conn = httplib.HTTPConnection(SPEED_TEST_HOST, timeout=5)
+        try:
+            conn.connect()
+            connected = time.time()
+            conn.request('GET', "/{path}?size={size}".format(path=SPEED_TEST_PATH, size=size))
+            request_time = time.time()
+            resp = conn.getresponse()
+            response_time = time.time()
+            response_content = resp.read()
+            size = len(response_content)
+            transferred = time.time()
+            conn.close()
+        except (socket.gaierror, socket.timeout, socket.error) as err:
+            print "Connecting to %s failed: %s" % (SPEED_TEST_HOST, err)
+            return None
 
         gen_time = float(resp.getheader("X-gen-duration"))
         transfer_time = transferred - response_time - gen_time
@@ -72,15 +77,19 @@ class InternetConnectionSpeed(object):
         upload_data = self.get_random_data(size)
         size = len(upload_data)
         start = time.time()
-        conn = httplib.HTTPConnection(SPEED_TEST_HOST)
-        conn.connect()
-        connected = time.time()
-        conn.request('POST', "/" + SPEED_TEST_PATH, upload_data)
-        request_time = time.time()
-        resp = conn.getresponse()
-        resp.read()
-        transfer_time = time.time()
-        conn.close()
+        conn = httplib.HTTPConnection(SPEED_TEST_HOST, timeout=5)
+        try:
+            conn.connect()
+            connected = time.time()
+            conn.request('POST', "/" + SPEED_TEST_PATH, upload_data)
+            request_time = time.time()
+            resp = conn.getresponse()
+            resp.read()
+            transfer_time = time.time()
+            conn.close()
+        except (socket.gaierror, socket.timeout, socket.error) as err:
+            print "Network error occurred: %s - %s" % (SPEED_TEST_HOST, err)
+            return None
 
         data = {
             "fields": {
@@ -102,9 +111,14 @@ class InternetConnectionSpeed(object):
     def fetch_once(self, sizes):
         measurements = []
         for size in sizes:
-            measurements.append(self.measure_download(size))
-            measurements.append(self.measure_upload(size))
-        self.redis.publish("influx-update-pubsub", json.dumps(measurements))
+            download_data = self.measure_download(size)
+            if download_data:
+                measurements.append(download_data)
+            upload_data = self.measure_upload(size)
+            if upload_data:
+                measurements.append(upload_data)
+        if len(measurements) > 0:
+            self.redis.publish("influx-update-pubsub", json.dumps(measurements))
 
     def run(self):
         last_fetch_at = time.time()

@@ -30,6 +30,8 @@ class DnsSpeed(object):
     def __init__(self):
         self.redis = redis.StrictRedis()
         self.resolver = dns.resolver.Resolver()
+        self.resolver.timeout = 2
+        self.resolver.lifetime = 2
 
     @time_method
     def resolve_dns(self, hostname):
@@ -44,7 +46,7 @@ class DnsSpeed(object):
         for a in range(1, 6):
             try:
                 response_time = self.resolve_dns(hostname)
-            except dns.exception.Timeout:
+            except dns.exception.DNSException:
                 response_time = None
             response_times.append(response_time)
             data["try-%s" % a] = response_time
