@@ -1,4 +1,3 @@
-from influxdb import InfluxDBClient
 from local_settings import NAMESERVERS, VALID_DESTINATIONS, INVALID_DESTINATIONS, VALID_RANDOM_DESTINATIONS, INVALID_RANDOM_DESTINATIONS, DNS_INTERVAL
 import datetime
 import dns.resolver
@@ -17,15 +16,6 @@ assert isinstance(INVALID_RANDOM_DESTINATIONS, (list, tuple))
 assert isinstance(DNS_INTERVAL, (int, float))
 
 
-class DateTimeEncoder(json.JSONEncoder):
-
-    def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return o.isoformat()
-
-        return json.JSONEncoder.default(self, o)
-
-
 def time_method(func):
     def inner(*args, **kwargs):
         start_time = time.time()
@@ -39,7 +29,6 @@ class DnsSpeed(object):
 
     def __init__(self):
         self.redis = redis.StrictRedis()
-        self.influx = InfluxDBClient("localhost", 8086, "root", "root", "home")
         self.resolver = dns.resolver.Resolver()
 
     @time_method
@@ -69,12 +58,12 @@ class DnsSpeed(object):
         }
         if extra_tags is not None:
             tags.update(extra_tags)
-        influx_data = [{
+        influx_data = {
             "measurement": "dns_speed",
             "tags": tags,
             "time": datetime.datetime.utcnow().isoformat() + "Z",
             "fields": data,
-        }]
+        }
         return influx_data
 
     def fetch_once(self):
@@ -95,8 +84,7 @@ class DnsSpeed(object):
                 generated_destination = str(uuid.uuid4()) + "." + destination
                 data = self.test(generated_destination)
                 measurements.append(self.write_data(nameserver, destination, data, {"type": "invalid", "class": "random"}))
-        self.redis.publish("influx-update-pubsub", json.dumps(measurements, cls=DateTimeEncoder))
-        self.influx.write_points(measurements)
+        self.redis.publish("influx-update-pubsub", json.dumps(measurements))
 
     def run(self):
         last_fetch_at = time.time()

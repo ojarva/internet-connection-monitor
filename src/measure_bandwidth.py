@@ -1,4 +1,3 @@
-from influxdb import InfluxDBClient
 from local_settings import SPEED_TEST_HOST, SPEED_TEST_PATH, BANDWIDTH_INTERVAL, FULL_BANDWIDTH_SIZES, FULL_BANDWIDTH_RATIO, BANDWIDTH_SIZES
 from setproctitle import setproctitle
 import datetime
@@ -18,20 +17,10 @@ assert isinstance(BANDWIDTH_SIZES, (tuple, list))
 assert isinstance(FULL_BANDWIDTH_SIZES, (tuple, list))
 
 
-class DateTimeEncoder(json.JSONEncoder):
-
-    def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return o.isoformat()
-
-        return json.JSONEncoder.default(self, o)
-
-
 class InternetConnectionSpeed(object):
 
     def __init__(self):
         self.redis = redis.StrictRedis()
-        self.influx = InfluxDBClient("localhost", 8086, "root", "root", "home")
 
     @classmethod
     def get_random_data(cls, size):
@@ -115,8 +104,7 @@ class InternetConnectionSpeed(object):
         for size in sizes:
             measurements.append(self.measure_download(size))
             measurements.append(self.measure_upload(size))
-        self.redis.publish("influx-update-pubsub", json.dumps(measurements, cls=DateTimeEncoder))
-        self.influx.write_points(measurements)
+        self.redis.publish("influx-update-pubsub", json.dumps(measurements))
 
     def run(self):
         last_fetch_at = time.time()

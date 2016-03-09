@@ -1,4 +1,3 @@
-from influxdb import InfluxDBClient
 from local_settings import PING_DESTINATIONS, PING_INTERVAL, PING_COUNT
 from setproctitle import setproctitle
 import datetime
@@ -17,20 +16,10 @@ assert PING_INTERVAL >= 5
 assert PING_COUNT > 0
 
 
-class DateTimeEncoder(json.JSONEncoder):
-
-    def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return o.isoformat()
-
-        return json.JSONEncoder.default(self, o)
-
-
 class PingSpeed(object):
 
     def __init__(self):
         self.redis = redis.StrictRedis()
-        self.influx = InfluxDBClient("localhost", 8086, "root", "root", "home")
 
     @classmethod
     def parse_fping(cls, stdout, stderr):
@@ -82,8 +71,7 @@ class PingSpeed(object):
 
     def fetch_once(self):
         measurements = self.ping(PING_DESTINATIONS)
-        self.redis.publish("influx-update-pubsub", json.dumps(measurements, cls=DateTimeEncoder))
-        self.influx.write_points(measurements)
+        self.redis.publish("influx-update-pubsub", json.dumps(measurements))
 
     def run(self):
         last_fetch_at = time.time()
