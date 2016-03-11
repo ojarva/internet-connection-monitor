@@ -66,6 +66,7 @@ class InternetConnectionSpeed(object):
             "tags": {
                 "direction": "download",
                 "size": size,
+                "source": "http",
             },
             "measurement": "internet_speed",
             "time": datetime.datetime.utcnow().isoformat() + "Z",
@@ -101,6 +102,7 @@ class InternetConnectionSpeed(object):
             },
             "tags": {
                 "direction": "upload",
+                "source": "http",
                 "size": size,
             },
             "measurement": "internet_speed",
