@@ -1,7 +1,6 @@
 from local_settings import PING_DESTINATIONS, PING_INTERVAL, PING_COUNT
 from setproctitle import setproctitle
 import datetime
-import httplib
 import json
 import redis
 import subprocess
@@ -79,7 +78,7 @@ class PingSpeed(object):
             self.fetch_once()
             sleep_time = max(PING_INTERVAL / 4, PING_INTERVAL - (time.time() - last_fetch_at))
             last_fetch_at = time.time()
-            print "Sleeping for %s" % sleep_time
+            print(f"Sleeping for {sleep_time}s")
             time.sleep(sleep_time)
 
 

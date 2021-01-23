@@ -94,7 +94,7 @@ class DnsSpeed(object):
             self.fetch_once()
             sleep_time = max(DNS_INTERVAL / 4, DNS_INTERVAL - (time.time() - last_fetch_at))
             last_fetch_at = time.time()
-            print "Sleeping for %s" % sleep_time
+            print(f"Sleeping for {sleep_time}s")
             time.sleep(sleep_time)
 
 

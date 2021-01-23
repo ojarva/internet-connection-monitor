@@ -1,7 +1,7 @@
 from local_settings import SPEED_TEST_HOST, SPEED_TEST_PATH, BANDWIDTH_INTERVAL, FULL_BANDWIDTH_SIZES, FULL_BANDWIDTH_RATIO, BANDWIDTH_SIZES
 from setproctitle import setproctitle
 import datetime
-import httplib
+from http import client as httplib
 import json
 import redis
 import time
@@ -48,7 +48,7 @@ class InternetConnectionSpeed(object):
             transferred = time.time()
             conn.close()
         except (socket.gaierror, socket.timeout, socket.error) as err:
-            print "Connecting to %s failed: %s" % (SPEED_TEST_HOST, err)
+            print(f"Connecting to {SPEED_TEST_HOST} failed: {err!r}")
             return None
 
         gen_time = float(resp.getheader("X-gen-duration"))
@@ -89,7 +89,7 @@ class InternetConnectionSpeed(object):
             transfer_time = time.time()
             conn.close()
         except (socket.gaierror, socket.timeout, socket.error) as err:
-            print "Network error occurred: %s - %s" % (SPEED_TEST_HOST, err)
+            print(f"Network error occurred: {SPEED_TEST_HOST} - {err!r}")
             return None
 
         data = {
@@ -134,7 +134,7 @@ class InternetConnectionSpeed(object):
             self.fetch_once(sizes)
             sleep_time = max(BANDWIDTH_INTERVAL / 4, BANDWIDTH_INTERVAL - (time.time() - last_fetch_at))
             last_fetch_at = time.time()
-            print "Sleeping for %s" % sleep_time
+            print(f"Sleeping for {sleep_time}s")
             time.sleep(sleep_time)
             i += 1
 
