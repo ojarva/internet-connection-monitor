@@ -1,4 +1,4 @@
-dnspython==2.1.0
+dnspython==2.6.1
 influxdb==5.3.1
 redis==4.5.4
 setproctitle==1.2.2
